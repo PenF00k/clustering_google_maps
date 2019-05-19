@@ -2,12 +2,6 @@ import 'package:clustering_google_maps/src/lat_lang_geohash.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 abstract class SingleBitmapDescriptorProvider<T, E> {
-  final PointDescriptor _pointDescriptor;
-
-  SingleBitmapDescriptorProvider(this._pointDescriptor);
-
-  PointDescriptor get pointDescriptor => _pointDescriptor;
-
   Future<Marker> get(E data);
 }
 
