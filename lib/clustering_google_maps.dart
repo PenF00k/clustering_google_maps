@@ -4,9 +4,7 @@ import 'dart:async';
 
 import 'package:clustering_google_maps/src/aggregated_marker/aggregated_bitmap_descriptors.dart';
 import 'package:clustering_google_maps/src/aggregated_marker/bitmap_descriptor_provider.dart';
-import 'package:clustering_google_maps/src/aggregated_marker/round_bitmap_descriptor_provider.dart';
 import 'package:clustering_google_maps/src/db_helper.dart';
-import 'package:clustering_google_maps/src/lat_lang_geohash.dart';
 import 'package:clustering_google_maps/src/single_marker/bitmap_descriptor_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -20,7 +18,7 @@ export 'src/aggregated_marker/bitmap_descriptor_provider.dart';
 export 'src/aggregated_marker/round_bitmap_descriptor_provider.dart';
 export 'src/single_marker/bitmap_descriptor_provider.dart';
 
-class ClusteringHelper {
+class ClusteringHelper<T, E> {
   ClusteringHelper.forDB({
     @required this.dbTable,
     @required this.dbLatColumn,
@@ -31,7 +29,7 @@ class ClusteringHelper {
     this.maxZoomForAggregatePoints = 13.5,
     this.singleBitmapDescriptorProvider,
     this.whereClause = "",
-    this.aggregatedBitmapDescriptorProvider = const RoundAggregatedBitmapDescriptorProvider(),
+    @required this.aggregatedBitmapDescriptorProvider,
   })  : assert(dbTable != null),
         assert(dbGeohashColumn != null),
         assert(dbLongColumn != null),
@@ -42,7 +40,7 @@ class ClusteringHelper {
     @required this.updateMarkers,
     this.maxZoomForAggregatePoints = 13.5,
     this.singleBitmapDescriptorProvider,
-    this.aggregatedBitmapDescriptorProvider = const RoundAggregatedBitmapDescriptorProvider(),
+    @required this.aggregatedBitmapDescriptorProvider,
   }) : assert(list != null);
 
   //After this value the map show the single points without aggregation
@@ -64,7 +62,7 @@ class ClusteringHelper {
   String dbGeohashColumn;
 
   //Strategy to provide single bitmap descriptor
-  final SingleBitmapDescriptorProvider singleBitmapDescriptorProvider;
+  final SingleBitmapDescriptorProvider<T, E> singleBitmapDescriptorProvider;
 
   //Where clause for query db
   String whereClause;
@@ -77,7 +75,7 @@ class ClusteringHelper {
   Function showSinglePoint;
 
   //Function for update Markers on Google Map
-  Function updateMarkers;
+  Function(Set<Marker> markers) updateMarkers;
 
   //List of points for memory clustering
   List<PointDescriptor> list;
@@ -164,13 +162,13 @@ class ClusteringHelper {
   // NOT RECCOMENDED for good performance (SQLite IS BETTER)
   List<AggregatedBitmapDescriptors> _retrieveAggregatedPoints(
       List<PointDescriptor> inputList, List<AggregatedBitmapDescriptors> resultList, int level) {
-    print("input list lenght: " + inputList.length.toString());
+//    print("input list lenght: " + inputList.length.toString());
 
     if (inputList.isEmpty) {
       return resultList;
     }
-    final List<PointDescriptor> newInputList = List.from(inputList);
-    List<PointDescriptor> tmp;
+    final List<PointDescriptor<E>> newInputList = List.from(inputList);
+    List<PointDescriptor<E>> tmp;
     final t = newInputList[0].latLngAndGeohash.geohash.substring(0, level);
     tmp = newInputList.where((p) => p.latLngAndGeohash.geohash.substring(0, level) == t).toList();
     newInputList.removeWhere((p) => p.latLngAndGeohash.geohash.substring(0, level) == t);
@@ -181,22 +179,25 @@ class ClusteringHelper {
       longitude += l.latLngAndGeohash.location.longitude;
     });
     final count = tmp.length;
-    final a =
-        AggregatedBitmapDescriptors(LatLng(latitude / count, longitude / count), count, singleBitmapDescriptorProvider);
+
+    PointDescriptor<E> data = count == 1 ? tmp[0] : null;
+
+    final a = AggregatedBitmapDescriptors<T, E>(
+        LatLng(latitude / count, longitude / count), count, data, singleBitmapDescriptorProvider);
     resultList.add(a);
     return _retrieveAggregatedPoints(newInputList, resultList, level);
   }
 
   Future<void> updateAggregatedPoints({double zoom = 0.0}) async {
-    List<AggregatedBitmapDescriptors> aggregation = await getAggregatedPoints(zoom);
+    List<AggregatedBitmapDescriptors<T, E>> aggregation = await getAggregatedPoints(zoom);
     print("aggregation lenght: " + aggregation.length.toString());
 
-    final markers = aggregation.map((a) async {
+    final markers = aggregation.map<Future<Marker>>((a) async {
       BitmapDescriptor bitmapDescriptor = BitmapDescriptor.defaultMarker;
       Marker marker;
       if (a.count == 1) {
 //        bitmapDescriptor = singleBitmapDescriptorProvider ?? BitmapDescriptor.defaultMarker;
-        marker = await a.singleBitmapDescriptorProvider.get(a);
+        marker = await a.singleBitmapDescriptorProvider.get(a.dataForSinglePoint.data);
       } else {
         // >1
 //        bitmapDescriptor = await BitmapDescriptor.fromAssetImage(ImageConfiguration(), a.bitmabAssetName);
@@ -210,48 +211,59 @@ class ClusteringHelper {
       return Marker(
         markerId: markerId,
         position: a.location,
-        infoWindow: InfoWindow(title: a.count.toString()),
+//        infoWindow: InfoWindow(title: a.count.toString()),
         icon: bitmapDescriptor,
         onTap: () {
           print("tap marker");
         },
       );
-    }).toSet();
+    });
 
-    await Future.wait(markers);
+    List<Marker> res = await Future.wait(markers);
 
-    updateMarkers(markers);
+    if (res.length == 0) res = <Marker>[];
+
+    updateMarkers(res.toSet());
   }
 
   updatePoints(double zoom) async {
     print("update single points");
     try {
-      List<LatLngAndGeohash> listOfPoints;
+      List<PointDescriptor> listOfPoints;
       if (database != null) {
         listOfPoints = await DBHelper.getPoints(
             database: database,
             dbTable: dbTable,
             dbLatColumn: dbLatColumn,
             dbLongColumn: dbLongColumn,
+            singleBitmapDescriptorProvider: singleBitmapDescriptorProvider,
             whereClause: whereClause);
       } else {
-        listOfPoints = list.map((pd) => pd.latLngAndGeohash).toList();
+        listOfPoints = list;
+//            .map((pd) => singleBitmapDescriptorProvider.createPointDescriptor(pd.latLngAndGeohash, data: pd.data))
+//            .toList();
       }
 
-      final Set<Marker> markers = listOfPoints.map((p) {
-        final marker = singleBitmapDescriptorProvider.get(p);
+      final markers = listOfPoints.map((p) async {
+        final marker = await singleBitmapDescriptorProvider.get(p.data);
         if (marker != null) return marker;
 
-        final MarkerId markerId = MarkerId(p.getId());
+        final MarkerId markerId = MarkerId(p.latLngAndGeohash.getId());
         return Marker(
           markerId: markerId,
-          position: p.location,
-          infoWindow:
-              InfoWindow(title: "${p.location.latitude.toStringAsFixed(2)},${p.location.longitude.toStringAsFixed(2)}"),
+          position: p.latLngAndGeohash.location,
+          infoWindow: InfoWindow(
+              title:
+                  "${p.latLngAndGeohash.location.latitude.toStringAsFixed(2)},${p.latLngAndGeohash.location.longitude.toStringAsFixed(2)}"),
           icon: BitmapDescriptor.defaultMarker,
         );
-      }).toSet();
-      updateMarkers(markers);
+      });
+
+      List<Marker> res = await Future.wait(markers);
+
+      if (res.length == 0) res = <Marker>[];
+
+      updateMarkers(res.toSet());
     } catch (ex) {
       print(ex.toString());
     }

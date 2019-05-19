@@ -61,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
     clusteringHelper = ClusteringHelper.forMemory(
       list: widget.list,
       updateMarkers: updateMarkers,
+      aggregatedBitmapDescriptorProvider: RoundAggregatedBitmapDescriptorProvider(),
     );
   }
 

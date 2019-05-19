@@ -19,15 +19,16 @@ class DBHelper {
       if (database == null) {
         throw Exception("Database must not be null");
       }
-      var result = await database.rawQuery(
-          'SELECT COUNT(*) as n_marker, AVG($dbLatColumn) as lat, AVG($dbLongColumn) as long '
-          'FROM $dbTable $whereClause GROUP BY substr($dbGeohashColumn,1,$level);');
+      var result =
+          await database.rawQuery('SELECT COUNT(*) as n_marker, AVG($dbLatColumn) as lat, AVG($dbLongColumn) as long '
+              'FROM $dbTable $whereClause GROUP BY substr($dbGeohashColumn,1,$level);');
 
       List<AggregatedBitmapDescriptors> aggregatedPoints = new List();
 
       for (Map<String, dynamic> item in result) {
         print(item);
-        var p = new AggregatedBitmapDescriptors.fromMap(item, dbLatColumn, dbLongColumn, singleBitmapDescriptorProvider);
+        var p =
+            new AggregatedBitmapDescriptors.fromMap(item, dbLatColumn, dbLongColumn, singleBitmapDescriptorProvider);
         aggregatedPoints.add(p);
       }
       print("--------- COMPLETE QUERY AGGREGATION");
@@ -39,26 +40,26 @@ class DBHelper {
     }
   }
 
-  static Future<List<LatLngAndGeohash>> getPoints(
+  static Future<List<PointDescriptor>> getPoints(
       {@required Database database,
       @required String dbTable,
       @required String dbLatColumn,
       @required String dbLongColumn,
+      @required SingleBitmapDescriptorProvider singleBitmapDescriptorProvider,
       String whereClause = ""}) async {
     try {
-      var result = await database
-          .rawQuery('SELECT $dbLatColumn as lat, $dbLongColumn as long '
-              'FROM $dbTable $whereClause;');
+      var result = await database.rawQuery('SELECT $dbLatColumn as lat, $dbLongColumn as long '
+          'FROM $dbTable $whereClause;');
       List<LatLngAndGeohash> points = new List();
       for (Map<String, dynamic> item in result) {
         var p = new LatLngAndGeohash.fromMap(item);
         points.add(p);
       }
       print("--------- COMPLETE QUERY");
-      return points;
+      return points.map((llgh) => singleBitmapDescriptorProvider.createPointDescriptor(llgh)).toList();
     } catch (e) {
       print(e.toString());
-      return List<LatLngAndGeohash>();
+      return List<PointDescriptor>();
     }
   }
 }

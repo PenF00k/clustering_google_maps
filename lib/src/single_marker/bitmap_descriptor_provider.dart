@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 abstract class SingleBitmapDescriptorProvider<T, E> {
   Future<Marker> get(E data);
+  PointDescriptor createPointDescriptor(LatLngAndGeohash _latLngAndGeohash, {E data});
 }
 
 abstract class PointDescriptor<E> {

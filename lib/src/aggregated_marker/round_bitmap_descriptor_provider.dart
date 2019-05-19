@@ -4,13 +4,20 @@ import 'dart:ui';
 import 'package:clustering_google_maps/src/aggregated_marker/bitmap_descriptor_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:quiver/collection.dart';
 
 class RoundAggregatedBitmapDescriptorProvider implements AggregatedBitmapDescriptorProvider {
-  const RoundAggregatedBitmapDescriptorProvider(): super();
+  LruMap<int, BitmapDescriptor> cache = LruMap<int, BitmapDescriptor>(maximumSize: 20);
 
   @override
-  Future<BitmapDescriptor> get(double zoom, int pointsCount) {
-    return ClusteringMarkerDrawer.generateMarkerBitmapDescriptor(pointsCount);
+  Future<BitmapDescriptor> get(double zoom, int pointsCount) async {
+    if (cache.containsKey(pointsCount)) {
+      return cache[pointsCount];
+    }
+
+    final bd = await ClusteringMarkerDrawer.generateMarkerBitmapDescriptor(pointsCount);
+    cache[pointsCount] = bd;
+    return bd;
   }
 }
 
@@ -24,8 +31,8 @@ class ClusteringMarkerDrawer {
 
   static Future<ByteData> drawRoundMarkerWithNumber(int count,
       {Color color, double diameter, double countFontSize}) async {
-    diameter ??= 30;
-    countFontSize ??= 24;
+    diameter ??= 120;
+    countFontSize ??= 48;
 
     PictureRecorder recorder = new PictureRecorder();
     Canvas c = new Canvas(recorder);
@@ -52,6 +59,7 @@ class ClusteringMarkerDrawer {
 //
 //    c.drawPath(path, paint);
 
+    if (count > 999) count = 999;
     final countString = "$count";
     final countOffset = _getPriceOffset(countString);
     _drawText(c, countString, diameter * countOffset.dx, diameter * countOffset.dy, fontSize: countFontSize);
@@ -67,22 +75,16 @@ class ClusteringMarkerDrawer {
     switch (priceString.length) {
       case 0:
       case 1:
-        return const Offset(0.435, 0.33);
+        return const Offset(0.39, 0.27);
 
       case 2:
-        return const Offset(0.35, 0.33);
+        return const Offset(0.27, 0.27);
 
       case 3:
-        return const Offset(0.265, 0.33);
-
-      case 4:
-        return const Offset(0.18, 0.33);
-
-      case 5:
-        return const Offset(0.1, 0.33);
+        return const Offset(0.165, 0.27);
 
       default:
-        throw Exception("The count $priceString is greater than 5 digits. Are you sure the price can be this great??");
+        throw Exception("The count $priceString is greater than 3 digits. Are you sure the price can be this great??");
     }
   }
 
