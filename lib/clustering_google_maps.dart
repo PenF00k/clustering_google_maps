@@ -42,6 +42,7 @@ class ClusteringHelper {
     @required this.updateMarkers,
     this.maxZoomForAggregatePoints = 13.5,
     this.singleBitmapDescriptorProvider,
+    this.aggregatedBitmapDescriptorProvider = const RoundAggregatedBitmapDescriptorProvider(),
   }) : assert(list != null);
 
   //After this value the map show the single points without aggregation
