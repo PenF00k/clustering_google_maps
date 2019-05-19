@@ -191,10 +191,11 @@ class ClusteringHelper {
     print("aggregation lenght: " + aggregation.length.toString());
 
     final markers = aggregation.map((a) async {
-      BitmapDescriptor bitmapDescriptor;
+      BitmapDescriptor bitmapDescriptor = BitmapDescriptor.defaultMarker;
+      Marker marker;
       if (a.count == 1) {
 //        bitmapDescriptor = singleBitmapDescriptorProvider ?? BitmapDescriptor.defaultMarker;
-        bitmapDescriptor = await a.singleBitmapDescriptorProvider.get(a) ?? BitmapDescriptor.defaultMarker;
+        marker = await a.singleBitmapDescriptorProvider.get(a);
       } else {
         // >1
 //        bitmapDescriptor = await BitmapDescriptor.fromAssetImage(ImageConfiguration(), a.bitmabAssetName);
@@ -202,6 +203,8 @@ class ClusteringHelper {
 //        bitmapDescriptor = BitmapDescriptor.fromAsset(a.bitmabAssetName, package: "clustering_google_maps");
       }
       final MarkerId markerId = MarkerId(a.getId());
+
+      if (marker != null) return marker;
 
       return Marker(
         markerId: markerId,
@@ -235,13 +238,16 @@ class ClusteringHelper {
       }
 
       final Set<Marker> markers = listOfPoints.map((p) {
+        final marker = singleBitmapDescriptorProvider.get(p);
+        if (marker != null) return marker;
+
         final MarkerId markerId = MarkerId(p.getId());
         return Marker(
           markerId: markerId,
           position: p.location,
           infoWindow:
               InfoWindow(title: "${p.location.latitude.toStringAsFixed(2)},${p.location.longitude.toStringAsFixed(2)}"),
-          icon: singleBitmapDescriptorProvider.get(p) ?? BitmapDescriptor.defaultMarker,
+          icon: BitmapDescriptor.defaultMarker,
         );
       }).toSet();
       updateMarkers(markers);
