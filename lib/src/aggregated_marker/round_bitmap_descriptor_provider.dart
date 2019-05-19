@@ -10,11 +10,11 @@ class RoundAggregatedBitmapDescriptorProvider implements AggregatedBitmapDescrip
 
   @override
   Future<BitmapDescriptor> get(double zoom, int pointsCount) {
-    return MarkerDrawer.generateMarkerBitmapDescriptor(pointsCount);
+    return ClusteringMarkerDrawer.generateMarkerBitmapDescriptor(pointsCount);
   }
 }
 
-class MarkerDrawer {
+class ClusteringMarkerDrawer {
   static Future<BitmapDescriptor> generateMarkerBitmapDescriptor(int count,
       {Color color, double diameter, double countFontSize}) async {
     final bytes =
