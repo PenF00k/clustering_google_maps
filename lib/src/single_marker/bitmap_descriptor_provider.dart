@@ -8,7 +8,7 @@ abstract class SingleBitmapDescriptorProvider<T, E> {
 
   PointDescriptor get pointDescriptor => _pointDescriptor;
 
-  Future<BitmapDescriptor> get<T extends PointDescriptor<E>>();
+  Future<BitmapDescriptor> get(E data);
 }
 
 abstract class PointDescriptor<E> {

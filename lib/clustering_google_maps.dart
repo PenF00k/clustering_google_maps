@@ -194,7 +194,7 @@ class ClusteringHelper {
       BitmapDescriptor bitmapDescriptor;
       if (a.count == 1) {
 //        bitmapDescriptor = singleBitmapDescriptorProvider ?? BitmapDescriptor.defaultMarker;
-        bitmapDescriptor = await a.singleBitmapDescriptorProvider.get() ?? BitmapDescriptor.defaultMarker;
+        bitmapDescriptor = await a.singleBitmapDescriptorProvider.get(a) ?? BitmapDescriptor.defaultMarker;
       } else {
         // >1
 //        bitmapDescriptor = await BitmapDescriptor.fromAssetImage(ImageConfiguration(), a.bitmabAssetName);
@@ -241,7 +241,7 @@ class ClusteringHelper {
           position: p.location,
           infoWindow:
               InfoWindow(title: "${p.location.latitude.toStringAsFixed(2)},${p.location.longitude.toStringAsFixed(2)}"),
-          icon: singleBitmapDescriptorProvider.get() ?? BitmapDescriptor.defaultMarker,
+          icon: singleBitmapDescriptorProvider.get(p) ?? BitmapDescriptor.defaultMarker,
         );
       }).toSet();
       updateMarkers(markers);
