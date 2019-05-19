@@ -39,9 +39,11 @@ class ClusteringHelper<T, E> {
     @required this.list,
     @required this.updateMarkers,
     this.maxZoomForAggregatePoints = 13.5,
+    double initialZoom,
     this.singleBitmapDescriptorProvider,
     @required this.aggregatedBitmapDescriptorProvider,
-  }) : assert(list != null);
+  })  : assert(list != null),
+        _currentZoom = initialZoom;
 
   //After this value the map show the single points without aggregation
   final double maxZoomForAggregatePoints;
