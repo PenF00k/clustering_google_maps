@@ -1,10 +1,11 @@
+import 'package:clustering_google_maps/src/aggregated/aggregated_bitmap_descriptors.dart';
 import 'package:clustering_google_maps/src/aggregated_points.dart';
 import 'package:clustering_google_maps/src/lat_lang_geohash.dart';
 import 'package:meta/meta.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DBHelper {
-  static Future<List<AggregatedPoints>> getAggregatedPoints(
+  static Future<List<AggregatedBitmapDescriptors>> getAggregatedPoints(
       {@required Database database,
       @required String dbTable,
       @required String dbLatColumn,
@@ -21,11 +22,11 @@ class DBHelper {
           'SELECT COUNT(*) as n_marker, AVG($dbLatColumn) as lat, AVG($dbLongColumn) as long '
           'FROM $dbTable $whereClause GROUP BY substr($dbGeohashColumn,1,$level);');
 
-      List<AggregatedPoints> aggregatedPoints = new List();
+      List<AggregatedBitmapDescriptors> aggregatedPoints = new List();
 
       for (Map<String, dynamic> item in result) {
         print(item);
-        var p = new AggregatedPoints.fromMap(item, dbLatColumn, dbLongColumn);
+        var p = new AggregatedBitmapDescriptors.fromMap(item, dbLatColumn, dbLongColumn);
         aggregatedPoints.add(p);
       }
       print("--------- COMPLETE QUERY AGGREGATION");
@@ -33,7 +34,7 @@ class DBHelper {
     } catch (e) {
       print(e.toString());
       print("--------- COMPLETE QUERY AGGREGATION WITH ERROR");
-      return List<AggregatedPoints>();
+      return List<AggregatedBitmapDescriptors>();
     }
   }
 
