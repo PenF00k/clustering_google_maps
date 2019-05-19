@@ -1,6 +1,6 @@
-import 'package:clustering_google_maps/src/aggregated/aggregated_bitmap_descriptors.dart';
-import 'package:clustering_google_maps/src/aggregated_points.dart';
+import 'package:clustering_google_maps/src/aggregated_marker/aggregated_bitmap_descriptors.dart';
 import 'package:clustering_google_maps/src/lat_lang_geohash.dart';
+import 'package:clustering_google_maps/src/single_marker/bitmap_descriptor_provider.dart';
 import 'package:meta/meta.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -12,6 +12,7 @@ class DBHelper {
       @required String dbLongColumn,
       @required String dbGeohashColumn,
       @required int level,
+      @required SingleBitmapDescriptorProvider singleBitmapDescriptorProvider,
       String whereClause = ""}) async {
     print("--------- START QUERY AGGREGATION");
     try {
@@ -26,7 +27,7 @@ class DBHelper {
 
       for (Map<String, dynamic> item in result) {
         print(item);
-        var p = new AggregatedBitmapDescriptors.fromMap(item, dbLatColumn, dbLongColumn);
+        var p = new AggregatedBitmapDescriptors.fromMap(item, dbLatColumn, dbLongColumn, singleBitmapDescriptorProvider);
         aggregatedPoints.add(p);
       }
       print("--------- COMPLETE QUERY AGGREGATION");

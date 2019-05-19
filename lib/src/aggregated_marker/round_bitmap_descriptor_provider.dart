@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:clustering_google_maps/src/aggregated/bitmap_descriptor_provider.dart';
+import 'package:clustering_google_maps/src/aggregated_marker/bitmap_descriptor_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 

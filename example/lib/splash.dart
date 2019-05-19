@@ -70,7 +70,7 @@ class SplashState extends State<Splash> {
                         setState(() {
                           loading = true;
                         });
-                        final List<LatLngAndGeohash> list =
+                        final List<PointDescriptor> list =
                             await bloc.getListOfLatLngAndGeohash(context);
                         await Navigator.push(
                           context,

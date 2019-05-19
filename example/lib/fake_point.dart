@@ -1,3 +1,4 @@
+import 'package:clustering_google_maps/clustering_google_maps.dart';
 import 'package:geohash/geohash.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -14,15 +15,13 @@ class FakePoint {
   String geohash;
 
   FakePoint({this.location, this.id}) {
-    this.geohash =
-        Geohash.encode(this.location.latitude, this.location.longitude);
+    this.geohash = Geohash.encode(this.location.latitude, this.location.longitude);
   }
 
   FakePoint.fromMap(Map<String, dynamic> map)
       : id = map[dbId],
         location = LatLng(map[dbLat], map[dbLong]) {
-    this.geohash =
-        Geohash.encode(this.location.latitude, this.location.longitude);
+    this.geohash = Geohash.encode(this.location.latitude, this.location.longitude);
   }
 
   Map<String, dynamic> toJson() {
@@ -32,4 +31,13 @@ class FakePoint {
     data[dbLat] = this.location.longitude;
     return data;
   }
+}
+
+class FakePointDescriptor extends PointDescriptor {
+  final String _data;
+
+  FakePointDescriptor(this._data, LatLngAndGeohash latLngAndGeohash) : super(latLngAndGeohash);
+
+  @override
+  get data => _data;
 }
