@@ -18,6 +18,8 @@ export 'src/aggregated_marker/bitmap_descriptor_provider.dart';
 export 'src/aggregated_marker/round_bitmap_descriptor_provider.dart';
 export 'src/single_marker/bitmap_descriptor_provider.dart';
 
+typedef GroupMarkerTappedCallback = Function(double zoom, LatLng location);
+
 class ClusteringHelper<T, E> {
   ClusteringHelper.forDB({
     @required this.dbTable,
@@ -42,6 +44,7 @@ class ClusteringHelper<T, E> {
     double initialZoom,
     this.singleBitmapDescriptorProvider,
     @required this.aggregatedBitmapDescriptorProvider,
+    this.onGroupMarkerPressed,
   })  : assert(list != null),
         _currentZoom = initialZoom;
 
@@ -84,6 +87,9 @@ class ClusteringHelper<T, E> {
 
   //Strategy to provide group bitmap descriptor
   AggregatedBitmapDescriptorProvider aggregatedBitmapDescriptorProvider;
+
+  // Callback called when group marker is tapped
+  GroupMarkerTappedCallback onGroupMarkerPressed;
 
   //Call during the editing of CameraPosition
   //If you want updateMap during the zoom in/out set forceUpdate to true
@@ -216,7 +222,7 @@ class ClusteringHelper<T, E> {
 //        infoWindow: InfoWindow(title: a.count.toString()),
         icon: bitmapDescriptor,
         onTap: () {
-          print("tap marker");
+          onGroupMarkerPressed(_currentZoom, a.location);
         },
       );
     });

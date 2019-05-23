@@ -7,7 +7,25 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:quiver/collection.dart';
 
 class RoundAggregatedBitmapDescriptorProvider implements AggregatedBitmapDescriptorProvider {
-  LruMap<int, BitmapDescriptor> cache = LruMap<int, BitmapDescriptor>(maximumSize: 20);
+  final Color color;
+  final double diameter;
+  final double countFontSize;
+
+  final LruMap<int, BitmapDescriptor> cache;
+
+  const RoundAggregatedBitmapDescriptorProvider._(this.cache, {this.color, this.diameter, this.countFontSize});
+
+  RoundAggregatedBitmapDescriptorProvider({
+    int cacheSize = 20,
+    Color color,
+    double diameter,
+    double countFontSize,
+  }) : this._(
+          LruMap<int, BitmapDescriptor>(maximumSize: cacheSize),
+          color: color,
+          diameter: diameter,
+          countFontSize: countFontSize,
+        );
 
   @override
   Future<BitmapDescriptor> get(double zoom, int pointsCount) async {
@@ -15,7 +33,13 @@ class RoundAggregatedBitmapDescriptorProvider implements AggregatedBitmapDescrip
       return cache[pointsCount];
     }
 
-    final bd = await ClusteringMarkerDrawer.generateMarkerBitmapDescriptor(pointsCount);
+    final bd = await ClusteringMarkerDrawer.generateMarkerBitmapDescriptor(
+      pointsCount,
+      color: color,
+      diameter: diameter,
+      countFontSize: countFontSize,
+    );
+
     cache[pointsCount] = bd;
     return bd;
   }
@@ -32,7 +56,8 @@ class ClusteringMarkerDrawer {
   static Future<ByteData> drawRoundMarkerWithNumber(int count,
       {Color color, double diameter, double countFontSize}) async {
     diameter ??= 120;
-    countFontSize ??= 48;
+//    countFontSize ??= 48;
+    countFontSize ??= diameter / 2.5;
 
     PictureRecorder recorder = new PictureRecorder();
     Canvas c = new Canvas(recorder);
@@ -61,7 +86,7 @@ class ClusteringMarkerDrawer {
 
     if (count > 999) count = 999;
     final countString = "$count";
-    final countOffset = _getPriceOffset(countString);
+    final countOffset = _getCountOffset(countString);
     _drawText(c, countString, diameter * countOffset.dx, diameter * countOffset.dy, fontSize: countFontSize);
 
 //    final currencyOffset = markerSize.currencyOffset;
@@ -71,17 +96,17 @@ class ClusteringMarkerDrawer {
     return image.toByteData(format: ImageByteFormat.png);
   }
 
-  static Offset _getPriceOffset(String priceString) {
+  static Offset _getCountOffset(String priceString) {
     switch (priceString.length) {
       case 0:
       case 1:
-        return const Offset(0.39, 0.27);
+        return const Offset(0.37, 0.27);
 
       case 2:
-        return const Offset(0.27, 0.27);
+        return const Offset(0.26, 0.27);
 
       case 3:
-        return const Offset(0.165, 0.27);
+        return const Offset(0.14, 0.27);
 
       default:
         throw Exception("The count $priceString is greater than 3 digits. Are you sure the price can be this great??");
